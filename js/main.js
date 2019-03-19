@@ -1,24 +1,39 @@
-var svg = d3.select("svg"),
-        width = +svg.attr("width"),
-        height = +svg.attr("height");
+var svg = d3.select("svg");
+var margin = { left:80, right:20, top:150, bottom:100 };
+var width = +svg.attr("width");
+width = width - margin.left - margin.right;
+var height = +svg.attr("height");
+height = height - margin.top - margin.bottom;
 
-let margin = { left:80, right:20, top:150, bottom:100 };
+var g = svg.append('g')
+  .attr('transform', 'translate(' + margin.left + ', ' + margin.top + ')');
 
-    // Graph title
-  // svg.append('text')
-  // .attr('x', (svg.attr('width') / 2))
-  // .attr('y', 50)
-  // .attr('font-size', '30px')
-  // .attr('text-anchor', 'middle')
-  // .text('United States Educational Attainment');
+
+// Tooltip
+var tip = d3.tip().attr('class', 'd3-tip')
+.html(function(d) {
+  let text = "<span style='color:white'>" + d.countyName + ', ' + d.state + ': ' + d.rate + "%" + "</span><br>";
+
+  return text;
+});
+
+g.call(tip);
+
+// Graph title
+svg.append('text')
+    .attr('x', (svg.attr('width') / 2))
+    .attr('y', 50)
+    .attr('font-size', '30px')
+    .attr('text-anchor', 'middle')
+    .text('United States Educational Attainment');
 
 // Graph sub-title
-// svg.append('text')
-//   .attr('x', (svg.attr('width') / 2))
-//   .attr('y', 80)
-//   .attr('font-size', '20px')
-//   .attr('text-anchor', 'middle')
-//   .text('Percentage of adults age 25 and older with a bachelor\'s degree or higher (2010-2014)');
+svg.append('text')
+  .attr('x', (svg.attr('width') / 2))
+  .attr('y', 80)
+  .attr('font-size', '20px')
+  .attr('text-anchor', 'middle')
+  .text('Percentage of adults age 25 and older with a bachelor\'s degree or higher (2010-2014)');
 
     var unemployment = d3.map();
 
@@ -31,10 +46,6 @@ let margin = { left:80, right:20, top:150, bottom:100 };
     var color = d3.scaleThreshold()
         .domain([3, 12, 21, 30, 39, 48, 57, 66])
         .range(d3.schemeGreens[9]);
-
-    var g = svg.append("g")
-        .attr("class", "key")
-        .attr("transform", "translate(0,40)");
 
     g.selectAll("rect")
         .data(color.range().map(function(d) {
@@ -82,7 +93,7 @@ let margin = { left:80, right:20, top:150, bottom:100 };
     });
 
     function ready(us) {
-        svg.append("g")
+        g.append("g")
             .attr("class", "counties")
             .selectAll("path")
                 .data(topojson.feature(us, us.objects.counties).features)
@@ -96,12 +107,10 @@ let margin = { left:80, right:20, top:150, bottom:100 };
                   return color(d.rate);
                 })
                 .attr("d", path)
-            .append("title")
-                .text(function(d) { 
-                  return d.countyName + ', ' + d.state + ': ' + d.rate + "%"; 
-                });
+                .on('mouseover', tip.show)
+                .on('mouseout', tip.hide);
 
-        svg.append("path")
+        g.append("path")
             .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
             .attr("class", "states")
             .attr("d", path);
